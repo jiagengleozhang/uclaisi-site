@@ -190,4 +190,5 @@ html.crt-warp .screen { height: 100%; overflow-y: auto; scrollbar-gutter: stable
   body { font-size: 12px; }
   .screen { padding: 12px 12px 0; }
   #prompt { font-size: 16px; } /* stops iOS zooming in on focus */
+  .splash { display: none; } /* no room for it on a phone; it crowds the prompt */
 }
