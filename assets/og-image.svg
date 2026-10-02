@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="Menlo, 'SF Mono', monospace">
+  <!-- Link preview (WhatsApp, iMessage, Slack...): the terminal's welcome screen. -->
+  <rect width="1200" height="630" fill="#16121A"/>
+
+  <!-- Welcome box, with its title set into the top border -->
+  <rect x="60" y="62" width="1080" height="396" rx="18" fill="none" stroke="#B98FD6" stroke-width="2"/>
+  <rect x="92" y="48" width="236" height="30" fill="#16121A"/>
+  <text x="104" y="71" font-size="22" font-weight="bold" fill="#B98FD6">UCLAISI v26.27</text>
+
+  <!-- Left: logo -->
+  <text x="275" y="152" font-size="20" font-weight="bold" fill="#CBB0E0" text-anchor="middle" letter-spacing="10">UCL</text>
+  <g font-size="27" fill="#B98FD6" text-anchor="middle">
+    <text x="275" y="196">&#160;█████╗&#160;██╗███████╗██╗</text>
+    <text x="275" y="224">██╔══██╗██║██╔════╝██║</text>
+    <text x="275" y="252">███████║██║███████╗██║</text>
+    <text x="275" y="280">██╔══██║██║╚════██║██║</text>
+    <text x="275" y="308">██║&#160;&#160;██║██║███████║██║</text>
+    <text x="275" y="336">╚═╝&#160;&#160;╚═╝╚═╝╚══════╝╚═╝</text>
+  </g>
+  <text x="275" y="410" font-size="19" fill="#8B8492" text-anchor="middle">~/ucl/ai-safety</text>
+
+  <!-- Divider -->
+  <line x1="500" y1="96" x2="500" y2="426" stroke="#4F4856" stroke-width="2"/>
+
+  <!-- Right: what it is -->
+  <text x="540" y="160" font-size="36" font-weight="bold" fill="#F4F0F7">AI safety at UCL</text>
+  <g font-size="23" fill="#D9D3DE">
+    <text x="540" y="222">A student group for people interested</text>
+    <text x="540" y="256">in working on and thinking about</text>
+    <text x="540" y="290">Artificial Intelligence and its risks.</text>
+  </g>
+  <text x="540" y="352" font-size="21" fill="#8B8492">UCL AI Safety Initiative</text>
+  <text x="540" y="410" font-size="23" fill="#B98FD6">uclaisi.org</text>
+
+  <!-- Input bar -->
+  <line x1="60" y1="506" x2="1140" y2="506" stroke="#4F4856" stroke-width="2"/>
+  <text x="62" y="553" font-size="26" font-weight="bold" fill="#F4F0F7">❯</text>
+  <rect x="100" y="530" width="16" height="31" fill="#D9D3DE"/>
+  <text x="100" y="553" font-size="26" fill="#16121A">T</text>
+  <text x="116" y="553" font-size="26" fill="#8B8492">ry "what's on this term?"</text>
+  <line x1="60" y1="584" x2="1140" y2="584" stroke="#4F4856" stroke-width="2"/>
+</svg>

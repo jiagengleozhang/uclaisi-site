@@ -3,39 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Website</title>
+  <title>UCLAISI</title>
+  <meta name="description" content="UCL AI Safety Initiative: a student group for people interested in working on and thinking about Artificial Intelligence and its risks.">
+  <meta name="theme-color" content="#16121A">
+
+  <!-- Tab and home-screen icons (sources in assets/*.svg, PNGs rebuilt by make_images.sh) -->
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+  <!-- Link previews (WhatsApp, iMessage, Slack, Discord, LinkedIn, X). Chat apps need full URLs,
+       so these point at the live site: they work once this is deployed to uclaisi.org. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="UCLAISI">
+  <meta property="og:title" content="UCLAISI: AI safety at UCL">
+  <meta property="og:description" content="A student group for people interested in working on and thinking about Artificial Intelligence and its risks.">
+  <meta property="og:url" content="https://uclaisi.org/">
+  <meta property="og:image" content="https://uclaisi.org/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The UCLAISI terminal: the AISI logo, &quot;AI safety at UCL&quot;, and a prompt reading Try &quot;what's on this term?&quot;">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="site-header">
-    <a href="/" class="logo">My Website</a>
-    <nav>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-    </nav>
-  </header>
+  <main class="screen" id="screen">
+    <h1 class="sr-only">UCLAISI: UCL AI Safety Initiative</h1>
+    <div id="welcome"></div>
 
-  <main>
-    <section class="hero">
-      <h1>Hello, world.</h1>
-      <p>Start designing here.</p>
-    </section>
+    <noscript>
+      <p>This terminal needs JavaScript. You can still <a href="https://uclaisi.org/join">join the WhatsApp group</a> or <a href="https://lu.ma/UCLAISI">follow us on Luma</a>.</p>
+    </noscript>
 
-    <section id="about">
-      <h2>About</h2>
-      <p>Placeholder content.</p>
-    </section>
+    <div id="log" role="log" aria-live="polite"></div>
 
-    <section id="contact">
-      <h2>Contact</h2>
-      <p>Placeholder content.</p>
-    </section>
+    <div class="dock">
+      <form class="ln prompt" id="composer" autocomplete="off">
+        <span class="ps" aria-hidden="true">❯</span>
+        <span class="splash" id="splash" aria-hidden="true" hidden></span>
+        <div class="field">
+          <input id="prompt" type="text" aria-label="Ask the UCLAISI terminal" placeholder="Try &quot;what's on this term?&quot;" spellcheck="false" autocapitalize="off" autocomplete="off" enterkeyhint="send">
+          <div class="mirror" id="mirror" aria-hidden="true"></div>
+        </div>
+      </form>
+      <div id="below"></div>
+    </div>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; <span id="year"></span> My Website</p>
-  </footer>
-
+  <script src="events.js"></script>
+  <script src="content.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
