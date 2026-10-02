@@ -85,7 +85,7 @@
   function wrap(segs, width, first = "", rest = first) {
     const tokens = [];
     for (const s of segs) {
-      for (const part of s.t.split(/( +)/)) if (part) tokens.push({ ...s, t: part });
+      for (const part of s.t.split(/( +)/)) if (part) tokens.push({ ...s, t: part, src: s });
     }
     const lines = [];
     let line, used, fresh;
@@ -125,7 +125,19 @@
       }
     }
     lines.push(line);
-    return lines;
+    return lines.map(joinRuns);
+  }
+
+  // After wrapping, put neighbouring words from the same segment back together, so a link is
+  // one element per line instead of one per word.
+  function joinRuns(line) {
+    const out = [];
+    for (const s of line) {
+      const prev = out[out.length - 1];
+      if (prev && s.src && prev.src === s.src) out[out.length - 1] = { ...prev, t: prev.t + s.t };
+      else out.push(s);
+    }
+    return out;
   }
 
   function box(rows, width, title) {
@@ -138,6 +150,14 @@
   }
 
   const DECOR = /\b(bd|vr|art|qr)\b/;
+
+  // Links that wrap onto several lines become several elements; give them a shared group id.
+  const linkGroups = new WeakMap();
+  let nextGroup = 0;
+  function groupOf(src) {
+    if (!linkGroups.has(src)) linkGroups.set(src, String(++nextGroup));
+    return linkGroups.get(src);
+  }
 
   function segEl(s) {
     if (s.art) return artSlot(s);
@@ -162,6 +182,7 @@
       return document.createTextNode(s.t);
     }
     node.textContent = s.t;
+    if (s.src && (s.href || s.cmd)) node.dataset.group = groupOf(s.src);
     return node;
   }
 
@@ -942,6 +963,17 @@
       updateWarp();
     });
   });
+
+  // Hovering any piece of a link that wrapped onto several lines highlights all of it.
+  for (const [type, on] of [["mouseover", true], ["mouseout", false]]) {
+    document.addEventListener(type, (e) => {
+      const link = e.target.closest && e.target.closest("[data-group]");
+      if (!link) return;
+      for (const part of document.querySelectorAll(`[data-group="${link.dataset.group}"]`)) {
+        part.classList.toggle("hl", on);
+      }
+    });
+  }
 
   // ---------- CRT effect (styles in style.css, on/off saved per visitor) ----------
 

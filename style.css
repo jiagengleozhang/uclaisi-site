@@ -80,9 +80,9 @@ a { color: inherit; }
 a.cmd { color: var(--acc); text-decoration: none; }
 a.cmd.dim { color: var(--dim); }
 a.cmd.t2 { color: var(--t2); }
-a.cmd:hover { color: var(--acc-2); text-decoration: underline; }
+a.cmd:hover, a.cmd.hl { color: var(--acc-2); text-decoration: underline; }
 a.link { color: var(--t2); text-decoration: underline; text-underline-offset: 2px; }
-a.link:hover { color: var(--text); }
+a.link:hover, a.link.hl { color: var(--text); }
 a:focus-visible { outline: 1px solid var(--acc); outline-offset: 1px; }
 
 /* Conversation */
