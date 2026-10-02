@@ -142,21 +142,35 @@ a:focus-visible { outline: 1px solid var(--acc); outline-offset: 1px; }
 }
 @keyframes blink { 50% { background: transparent; color: var(--text); } }
 
-/* ---------- CRT effect (html.crt; turned on and off with /crt) ---------- */
+/* ---------- CRT effect (html.crt; turned on and off with /crt) ----------
+   The numbers live in custom properties so script.js can set them (and the localhost-only
+   tuning panel in tune.js can adjust them live). The defaults are in CRT_DEFAULTS in script.js. */
 
-/* Brighter phosphor: the light text colours are lifted a step (dim text stays put, so the
-   hierarchy holds), and every piece of text blooms in its own colour. */
 html.crt {
+  --crt-glow-a: 70%;      /* tight glow around each character */
+  --crt-glow-b: 40%;      /* wide bloom */
+  --crt-scan: 0.16;       /* scanline darkness */
+  --crt-vignette: 0.1;    /* edge darkness */
+  --roll-speed: 9s;       /* one pass of the rolling band */
+  --roll-bright: 1.12;    /* how much the band brightens what it passes over */
+  --roll-height: 22vh;
+  --roll-line: 0.09;      /* the thin scan line at the band's leading edge */
+  --crt-rgb: 0px;         /* red/cyan split during a glitch */
+
+  /* Brighter phosphor: the light text colours are lifted a step (dim text stays put, so the
+     hierarchy holds). */
   --strong: #FFFFFF;
   --text: #EAE5EE;
   --t2: #C6BFCD;
   --acc: #C9A2E6;
   --acc-2: #D9C2EC;
 }
+
+/* Phosphor glow: every piece of text blooms in its own colour, so bright text glows more. */
 html.crt .screen {
   text-shadow:
-    0 0 1px color-mix(in srgb, currentColor 70%, transparent),
-    0 0 8px color-mix(in srgb, currentColor 40%, transparent);
+    0 0 1px color-mix(in srgb, currentColor var(--crt-glow-a), transparent),
+    0 0 8px color-mix(in srgb, currentColor var(--crt-glow-b), transparent);
 }
 html.crt .qr { text-shadow: none; } /* keep the QR code crisp enough to scan */
 html.crt .cur { box-shadow: 0 0 8px color-mix(in srgb, var(--text) 45%, transparent); }
@@ -173,9 +187,62 @@ html.crt .crt-glass {
   border-radius: 22px;
   background:
     radial-gradient(ellipse at 28% 12%, rgba(255, 255, 255, 0.035), transparent 45%),
-    repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, 0.16) 2px 3px),
-    radial-gradient(ellipse at center, transparent 72%, rgba(0, 0, 0, 0.1) 100%);
-  box-shadow: 0 0 0 40px #0A080D, inset 0 0 30px rgba(0, 0, 0, 0.08);
+    repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, var(--crt-scan)) 2px 3px),
+    radial-gradient(ellipse at center, transparent 72%, rgba(0, 0, 0, var(--crt-vignette)) 100%);
+  box-shadow: 0 0 0 40px #0A080D, inset 0 0 30px rgba(0, 0, 0, calc(var(--crt-vignette) * 0.8));
+}
+
+/* Roll mode: a brighter strip drifting down the screen, like an old CRT's roll bar. It only
+   moves (transform), so the page underneath never has to be redrawn. Sits under the glass so
+   the frame's corners stay dark. */
+.crt-roll { display: none; }
+html.crt.crt-roll-on .crt-roll {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--roll-height);
+  z-index: 19;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(255, 255, 255, calc(var(--roll-line) * 0.3)) 40%,
+    rgba(255, 255, 255, calc(var(--roll-line) * 0.55)) 50%,
+    rgba(255, 255, 255, var(--roll-line)) 50.6%,
+    transparent 51.5%);
+  -webkit-backdrop-filter: brightness(var(--roll-bright));
+  backdrop-filter: brightness(var(--roll-bright));
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%, #000 51%, transparent 52%);
+  mask-image: linear-gradient(to bottom, transparent, #000 45%, #000 51%, transparent 52%);
+  transform: translateY(calc(-1 * var(--roll-height) - 3vh));
+  animation: crt-roll var(--roll-speed) linear infinite;
+  will-change: transform;
+}
+@keyframes crt-roll {
+  from { transform: translateY(calc(-1 * var(--roll-height) - 3vh)); }
+  to { transform: translateY(105vh); }
+}
+
+/* Glitch mode: for a moment, slices of the screen jolt sideways (script.js), with a red/cyan
+   split on the text and thin torn lines (.crt-tear, drawn by script.js). */
+html.crt.crt-glitching .screen {
+  text-shadow:
+    var(--crt-rgb) 0 0 rgba(255, 40, 90, 0.55),
+    calc(-1 * var(--crt-rgb)) 0 0 rgba(40, 220, 255, 0.55),
+    0 0 8px color-mix(in srgb, currentColor var(--crt-glow-b), transparent);
+}
+.crt-tear { display: none; }
+html.crt.crt-glitching .crt-tear {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.crt .crt-roll, html.crt .crt-tear { display: none; }
 }
 
 /* Bulge (html.crt-warp; desktop Chrome, Edge and Firefox only). The screen becomes a fixed

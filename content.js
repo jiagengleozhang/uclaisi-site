@@ -6,8 +6,8 @@
 // Review markers, on blocks and on list items:
 //   status: "draft"  wording Claude wrote that needs your approval
 //   status: "todo"   needs information only you have
-// Marked items show up with a yellow tag when you run the site locally (localhost), so you
-// can review them, and are hidden on the live site. Delete the `status` once an item is
+// Marked items show up with a yellow tag in preview copies (localhost, the GitHub Pages
+// preview), so you can review them, and are hidden on the live site. Delete the `status` once an item is
 // approved or filled in. Search this file for "TODO(needs info)" to find everything open.
 
 const SITE = {

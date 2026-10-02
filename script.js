@@ -14,9 +14,10 @@
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const finePointer = matchMedia("(pointer: fine)").matches;
   const baseTitle = document.title;
-  // Running locally: show items marked `status: "draft"` / `"todo"` in content.js, with a tag.
-  // On the live site they're hidden until the status is removed.
-  const PREVIEW = ["localhost", "127.0.0.1", ""].includes(location.hostname);
+  // Preview copies (localhost, the GitHub Pages preview, a shared tunnel...) show items marked
+  // `status: "draft"` / `"todo"` in content.js with a tag, and the CRT tuning panel. The live
+  // site (uclaisi.org) hides both.
+  const PREVIEW = !/(^|\.)uclaisi\.org$/.test(location.hostname);
   // (non-breaking spaces so a tag never wraps across lines)
   const STATUS_TAG = { draft: "draft\u00a0·\u00a0needs\u00a0approval", todo: "todo\u00a0·\u00a0needs\u00a0info" };
   const visible = (item) => !item.status || PREVIEW;
@@ -933,7 +934,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.target === input) return;
     if (e.key === "Escape" && task) task.skip();
-    else if (e.target.closest("a, button")) return; // let Enter activate the focused link
+    else if (e.target.closest("a, button, input, select, .tune")) return; // let controls keep their keys
     else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) input.focus({ preventScroll: true });
   });
 
@@ -952,7 +953,7 @@
       return;
     }
     if (task && e.target.closest("#log")) task.skip();
-    if (!e.target.closest("a, input") && !String(getSelection())) refocus();
+    if (!e.target.closest("a, input, select, button, .tune") && !String(getSelection())) refocus();
   });
 
   let resizeFrame = 0;
@@ -978,16 +979,39 @@
   // ---------- CRT effect (styles in style.css, on/off saved per visitor) ----------
 
   const root = document.documentElement;
-  const WARP = 0.02; // how much the screen bulges: things at the corners move in by 2% of the width
-  // Safari (and every iPhone browser) can't run this kind of filter on a live page, and on
-  // phones it costs too much, so those get the glow and glass without the bulge.
+
+  // The look of the CRT. In preview copies the tuning panel (tune.js) can change these live; the live
+  // site always uses exactly these values.
+  const CRT_DEFAULTS = {
+    mode: "roll",        // "none", "roll", "glitch" or "both" (glitches ride the rolling band)
+    warp: 0.02,          // bulge: things at the corners move in by this fraction of the width
+    glow: 70,            // tight glow around characters, %
+    bloom: 40,           // wide bloom, %
+    scanlines: 0.16,     // scanline darkness
+    vignette: 0.1,       // edge darkness
+    rollSpeed: 9,        // seconds for the band to cross the screen
+    rollBright: 1.12,    // how much the band brightens what it passes over
+    rollHeight: 22,      // band height, % of the screen
+    rollLine: 0.09,      // brightness of the thin line at the band's leading edge
+    glitchEvery: 6,      // average seconds between glitches
+    glitchLength: 180,   // how long one glitch lasts, ms
+    glitchShift: 12,     // how far slices jolt sideways, px
+    glitchSlices: 6,     // how many slices tear
+    glitchSpread: 20,    // how much of the screen the slices are spread over, %
+    glitchTear: 0.25,    // brightness of the torn lines
+    glitchRGB: 1.5,      // red/cyan split, px
+  };
+  const crt = { ...CRT_DEFAULTS };
+
+  // Safari (and every iPhone browser) can't run SVG filters on a live page, and on phones they
+  // cost too much, so those get the glow, glass and roll without the bulge, and a simpler glitch.
   const webkit = /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent)
     || /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   function setCrt(on) {
     root.classList.toggle("crt", on);
     try { localStorage.setItem("crt", on ? "on" : "off"); } catch {}
-    updateWarp();
+    applyCrt();
     layout();
   }
 
@@ -1000,24 +1024,53 @@
     };
   }
 
+  // Push the settings into the stylesheet's custom properties and (re)start what moves.
+  function applyCrt() {
+    const vars = {
+      "--crt-glow-a": `${crt.glow}%`,
+      "--crt-glow-b": `${crt.bloom}%`,
+      "--crt-scan": crt.scanlines,
+      "--crt-vignette": crt.vignette,
+      "--roll-speed": `${crt.rollSpeed}s`,
+      "--roll-bright": crt.rollBright,
+      "--roll-height": `${crt.rollHeight}vh`,
+      "--roll-line": crt.rollLine,
+    };
+    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
+    root.classList.toggle("crt-roll-on", crt.mode === "roll" || crt.mode === "both");
+    updateWarp();
+    scheduleGlitch();
+  }
+
   // Where the bulge draws the point (x, y) from: a little further out from the centre, more so
   // towards the corners. The displacement map and the click correction both use this.
   function warpOffset(x, y, rect) {
     const u = ((x - rect.left) / rect.width) * 2 - 1;
     const v = ((y - rect.top) / rect.height) * 2 - 1;
     const r2 = u * u + v * v;
-    return [(u * WARP * r2 * rect.width) / 2, (v * WARP * r2 * rect.height) / 2];
+    return [(u * crt.warp * r2 * rect.width) / 2, (v * crt.warp * r2 * rect.height) / 2];
+  }
+
+  // Point an SVG filter (and its feImage) at the screen's size.
+  function sizeFilter(filterId, imageId, rect) {
+    for (const id of [filterId, imageId]) {
+      const el = document.getElementById(id);
+      el.setAttribute("x", 0);
+      el.setAttribute("y", 0);
+      el.setAttribute("width", rect.width);
+      el.setAttribute("height", rect.height);
+    }
   }
 
   function updateWarp() {
-    const on = root.classList.contains("crt") && finePointer && !webkit;
+    const on = root.classList.contains("crt") && finePointer && !webkit && crt.warp > 0;
     root.classList.toggle("crt-warp", on);
     if (!on) return;
 
     // Draw the displacement map: red = how far to shift sideways, green = up/down, 50% = none.
     const rect = screen.getBoundingClientRect();
     const n = 128;
-    const scale = 2 * WARP * Math.max(rect.width, rect.height); // biggest shift, both directions
+    const scale = 2 * crt.warp * Math.max(rect.width, rect.height); // biggest shift, both directions
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = n;
     const ctx = canvas.getContext("2d");
@@ -1034,24 +1087,115 @@
       }
     }
     ctx.putImageData(img, 0, 0);
-
-    const filter = document.getElementById("crt-warp");
-    const map = document.getElementById("crt-map");
-    for (const el of [filter, map]) {
-      el.setAttribute("x", 0);
-      el.setAttribute("y", 0);
-      el.setAttribute("width", rect.width);
-      el.setAttribute("height", rect.height);
-    }
-    map.setAttribute("href", canvas.toDataURL());
+    sizeFilter("crt-warp", "crt-map", rect);
+    document.getElementById("crt-map").setAttribute("href", canvas.toDataURL());
     document.getElementById("crt-displace").setAttribute("scale", scale);
+  }
+
+  // ----- Glitch: every so often, thin slices of the screen jolt sideways for a moment -----
+
+  const tear = document.getElementById("crt-tear");
+  const rollBand = document.querySelector(".crt-roll");
+  let glitchTimer = 0;
+  let glitching = false;
+
+  function glitchOn() {
+    return root.classList.contains("crt") && !reducedMotion && (crt.mode === "glitch" || crt.mode === "both");
+  }
+
+  function scheduleGlitch() {
+    clearTimeout(glitchTimer);
+    if (!glitchOn()) return;
+    const wait = crt.glitchEvery * 1000 * (0.5 + Math.random()); // irregular, like real interference
+    glitchTimer = setTimeout(() => {
+      runGlitch();
+      scheduleGlitch();
+    }, wait);
+  }
+
+  // Where the rolling band's bright leading edge is right now, as a fraction of screen height.
+  function bandPosition() {
+    const anim = rollBand.getAnimations ? rollBand.getAnimations()[0] : null;
+    if (!anim || anim.currentTime == null) return Math.random();
+    const progress = (anim.currentTime % (crt.rollSpeed * 1000)) / (crt.rollSpeed * 1000);
+    const top = -crt.rollHeight - 3 + progress * (105 + crt.rollHeight + 3); // in vh
+    return (top + crt.rollHeight * 0.51) / 100;
+  }
+
+  async function runGlitch() {
+    if (glitching) return;
+    glitching = true;
+    // In "both" mode the tear follows the rolling band; otherwise it lands anywhere.
+    const centre = crt.mode === "both" ? bandPosition() : 0.1 + Math.random() * 0.8;
+    const frames = Math.max(1, Math.round(crt.glitchLength / 60));
+    root.classList.add("crt-glitching");
+    for (let f = 0; f < frames; f++) {
+      drawGlitch(makeSlices(centre));
+      await new Promise((resolve) => setTimeout(resolve, crt.glitchLength / frames));
+    }
+    screen.style.filter = "";
+    screen.style.transform = "";
+    tear.style.background = "";
+    root.style.setProperty("--crt-rgb", "0px");
+    root.classList.remove("crt-glitching");
+    glitching = false;
+  }
+
+  function makeSlices(centre) {
+    return Array.from({ length: crt.glitchSlices }, () => {
+      const top = Math.min(0.99, Math.max(0, centre + (Math.random() - 0.5) * (crt.glitchSpread / 100)));
+      return {
+        top,
+        height: 0.004 + Math.random() * 0.03,
+        shift: (Math.random() * 2 - 1) * crt.glitchShift,
+      };
+    }).sort((a, b) => a.top - b.top);
+  }
+
+  function drawGlitch(slices) {
+    root.style.setProperty("--crt-rgb", `${(Math.random() < 0.5 ? -1 : 1) * crt.glitchRGB}px`);
+
+    // Thin bright lines where the picture tears.
+    const lines = slices.map(({ top }) => {
+      const y = (top * 100).toFixed(2);
+      const y2 = (top * 100 + 0.12).toFixed(2);
+      return `linear-gradient(to bottom, transparent ${y}%, rgba(255, 255, 255, ${crt.glitchTear}) ${y}%, rgba(255, 255, 255, ${crt.glitchTear}) ${y2}%, transparent ${y2}%)`;
+    });
+    tear.style.background = lines.join(", ");
+
+    if (root.classList.contains("crt-warp")) {
+      // Shove each slice sideways with a displacement map (one column, one row per pixel band).
+      const rect = screen.getBoundingClientRect();
+      const n = 256;
+      const scale = 2 * Math.max(1, crt.glitchShift);
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = n;
+      const ctx = canvas.getContext("2d");
+      const img = ctx.createImageData(1, n);
+      for (let j = 0; j < n; j++) {
+        const y = (j + 0.5) / n;
+        const hit = slices.find((s) => y >= s.top && y < s.top + s.height);
+        img.data[j * 4] = Math.round((0.5 + (hit ? hit.shift : 0) / scale) * 255);
+        img.data[j * 4 + 1] = 128;
+        img.data[j * 4 + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      sizeFilter("crt-glitch", "crt-glitch-map", rect);
+      document.getElementById("crt-glitch-map").setAttribute("href", canvas.toDataURL());
+      document.getElementById("crt-glitch-displace").setAttribute("scale", scale);
+      screen.style.filter = "url(#crt-glitch) url(#crt-warp)";
+    } else {
+      // No SVG filters here (Safari, phones): jolt the whole screen instead.
+      screen.style.transform = `translateX(${slices[0].shift.toFixed(1)}px)`;
+    }
   }
 
   // The bulge moves what you see, not where things really are. Send each click to whatever is
   // drawn under the pointer instead of what's physically there.
   let remapping = false;
   document.addEventListener("click", (e) => {
-    if (remapping || !e.isTrusted || !root.classList.contains("crt-warp")) return;
+    if (remapping || !e.isTrusted || !root.classList.contains("crt-warp") || !screen.contains(e.target)) return;
     const [dx, dy] = warpOffset(e.clientX, e.clientY, screen.getBoundingClientRect());
     const target = document.elementFromPoint(e.clientX + dx, e.clientY + dy);
     if (!target || target === e.target) return;
@@ -1061,6 +1205,27 @@
     target.click();
     remapping = false;
   }, true);
+
+  // Hook for the tuning panel (tune.js), in preview copies only. Settings changed there are kept
+  // in that browser only.
+  if (PREVIEW) {
+    try { Object.assign(crt, JSON.parse(localStorage.getItem("crt-tune") || "{}")); } catch {}
+    window.UCLAISI_CRT = {
+      defaults: CRT_DEFAULTS,
+      get: () => ({ ...crt }),
+      set(patch) {
+        Object.assign(crt, patch);
+        try { localStorage.setItem("crt-tune", JSON.stringify(crt)); } catch {}
+        applyCrt();
+      },
+      reset() {
+        Object.assign(crt, CRT_DEFAULTS);
+        try { localStorage.removeItem("crt-tune"); } catch {}
+        applyCrt();
+      },
+      glitchNow: () => runGlitch(),
+    };
+  }
 
   // ---------- Start ----------
 
@@ -1081,7 +1246,7 @@
     splash.textContent = SPLASHES[pick];
     splash.hidden = false;
   }
-  updateWarp();
+  applyCrt();
   layout(true);
   renderMirror();
   refocus();

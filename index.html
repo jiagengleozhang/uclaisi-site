@@ -57,16 +57,27 @@
 
   <!-- CRT glass: scanlines, vignette, glare and the rounded screen edge (drawn over everything) -->
   <div class="crt-glass" aria-hidden="true"></div>
+  <!-- CRT roll: a brighter band drifting down the screen -->
+  <div class="crt-roll" aria-hidden="true"></div>
+  <!-- CRT glitch: torn lines, drawn by script.js while a glitch is happening -->
+  <div class="crt-tear" id="crt-tear" aria-hidden="true"></div>
   <!-- CRT bulge: script.js draws the displacement map that bends the screen -->
   <svg class="crt-defs" width="0" height="0" aria-hidden="true" focusable="false">
     <filter id="crt-warp" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feImage id="crt-map" result="map" preserveAspectRatio="none"/>
       <feDisplacementMap id="crt-displace" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
+    <!-- CRT glitch: horizontal slices shoved sideways; script.js draws a new map each frame -->
+    <filter id="crt-glitch" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feImage id="crt-glitch-map" result="map" preserveAspectRatio="none"/>
+      <feDisplacementMap id="crt-glitch-displace" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
   </svg>
 
   <script src="events.js"></script>
   <script src="content.js"></script>
   <script src="script.js"></script>
+  <!-- Temporary: CRT tuning panel, only shown on localhost. Delete this line and tune.js when done. -->
+  <script src="tune.js"></script>
 </body>
 </html>
