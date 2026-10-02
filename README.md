@@ -52,6 +52,8 @@ Search `content.js` for `TODO(needs info)` to find what's still open.
 - Plain English: "what's on this term?", "can I come to the reading group?"
 - Shell habits: `ls`, `cd events`, `cat join.md`, `man uclaisi`
 - Clicking: every purple `/command` is clickable, and the line under the prompt has quick links
+- `/crt` turns the CRT effect (glow, scanlines, curved glass, and a bulge in desktop
+  Chrome/Edge/Firefox) on or off; the choice is remembered per visitor
 - Keys: `/` opens the command menu, ↑↓ history, Tab completes, Esc skips the animation, Ctrl+L clears
 
 ## Files

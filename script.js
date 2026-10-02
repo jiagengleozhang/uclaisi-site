@@ -40,6 +40,7 @@
 
   const MENU = [
     ...PAGES.map((p) => ({ name: p.id, aliases: p.aliases || [], desc: p.desc })),
+    { name: "crt", aliases: [], desc: "turn the CRT screen effect on or off" },
     { name: "help", aliases: [], desc: "list commands" },
     { name: "clear", aliases: ["home"], desc: "clear the conversation" },
   ];
@@ -603,6 +604,7 @@
     if (lower.startsWith("/")) {
       const [name, arg] = lower.slice(1).split(/\s+/);
       if (name === "help") return { ...helpIntent(), quick: true };
+      if (name === "crt") return crtIntent(arg);
       if (name === "clear" || name === "home") return { clear: true };
       const page = byName.get(name);
       if (page && page.id === "start" && arg) return { ...startIntent(arg), quick: true };
@@ -786,7 +788,7 @@
     turns.length = 0;
     log.replaceChildren();
     document.title = baseTitle;
-    window.scrollTo(0, 0);
+    (root.classList.contains("crt-warp") ? screen : window).scrollTo(0, 0);
   }
 
   // ---------- URLs: every page has one, and back/forward work ----------
@@ -935,8 +937,98 @@
   let resizeFrame = 0;
   window.addEventListener("resize", () => {
     cancelAnimationFrame(resizeFrame);
-    resizeFrame = requestAnimationFrame(() => layout());
+    resizeFrame = requestAnimationFrame(() => {
+      layout();
+      updateWarp();
+    });
   });
+
+  // ---------- CRT effect (styles in style.css, on/off saved per visitor) ----------
+
+  const root = document.documentElement;
+  const WARP = 0.02; // how much the screen bulges: things at the corners move in by 2% of the width
+  // Safari (and every iPhone browser) can't run this kind of filter on a live page, and on
+  // phones it costs too much, so those get the glow and glass without the bulge.
+  const webkit = /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent)
+    || /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  function setCrt(on) {
+    root.classList.toggle("crt", on);
+    try { localStorage.setItem("crt", on ? "on" : "off"); } catch {}
+    updateWarp();
+    layout();
+  }
+
+  function crtIntent(arg) {
+    const on = arg === "on" ? true : arg === "off" ? false : !root.classList.contains("crt");
+    setCrt(on);
+    return {
+      quick: true,
+      blocks: [{ p: on ? "CRT effect on." : "CRT effect off." }, { dim: `\`/crt\` again to turn it ${on ? "off" : "back on"}.` }],
+    };
+  }
+
+  // Where the bulge draws the point (x, y) from: a little further out from the centre, more so
+  // towards the corners. The displacement map and the click correction both use this.
+  function warpOffset(x, y, rect) {
+    const u = ((x - rect.left) / rect.width) * 2 - 1;
+    const v = ((y - rect.top) / rect.height) * 2 - 1;
+    const r2 = u * u + v * v;
+    return [(u * WARP * r2 * rect.width) / 2, (v * WARP * r2 * rect.height) / 2];
+  }
+
+  function updateWarp() {
+    const on = root.classList.contains("crt") && finePointer && !webkit;
+    root.classList.toggle("crt-warp", on);
+    if (!on) return;
+
+    // Draw the displacement map: red = how far to shift sideways, green = up/down, 50% = none.
+    const rect = screen.getBoundingClientRect();
+    const n = 128;
+    const scale = 2 * WARP * Math.max(rect.width, rect.height); // biggest shift, both directions
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = n;
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(n, n);
+    for (let j = 0; j < n; j++) {
+      for (let i = 0; i < n; i++) {
+        const x = rect.left + ((i + 0.5) / n) * rect.width;
+        const y = rect.top + ((j + 0.5) / n) * rect.height;
+        const [dx, dy] = warpOffset(x, y, rect);
+        const k = (j * n + i) * 4;
+        img.data[k] = Math.round((0.5 + dx / scale) * 255);
+        img.data[k + 1] = Math.round((0.5 + dy / scale) * 255);
+        img.data[k + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    const filter = document.getElementById("crt-warp");
+    const map = document.getElementById("crt-map");
+    for (const el of [filter, map]) {
+      el.setAttribute("x", 0);
+      el.setAttribute("y", 0);
+      el.setAttribute("width", rect.width);
+      el.setAttribute("height", rect.height);
+    }
+    map.setAttribute("href", canvas.toDataURL());
+    document.getElementById("crt-displace").setAttribute("scale", scale);
+  }
+
+  // The bulge moves what you see, not where things really are. Send each click to whatever is
+  // drawn under the pointer instead of what's physically there.
+  let remapping = false;
+  document.addEventListener("click", (e) => {
+    if (remapping || !e.isTrusted || !root.classList.contains("crt-warp")) return;
+    const [dx, dy] = warpOffset(e.clientX, e.clientY, screen.getBoundingClientRect());
+    const target = document.elementFromPoint(e.clientX + dx, e.clientY + dy);
+    if (!target || target === e.target) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    remapping = true;
+    target.click();
+    remapping = false;
+  }, true);
 
   // ---------- Start ----------
 
@@ -957,6 +1049,7 @@
     splash.textContent = SPLASHES[pick];
     splash.hidden = false;
   }
+  updateWarp();
   layout(true);
   renderMirror();
   refocus();

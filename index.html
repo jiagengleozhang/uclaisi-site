@@ -6,6 +6,11 @@
   <title>UCLAISI</title>
   <meta name="description" content="UCL AI Safety Initiative: a student group for people interested in working on and thinking about Artificial Intelligence and its risks.">
   <meta name="theme-color" content="#16121A">
+  <!-- CRT effect is on unless the visitor turned it off with /crt (set early to avoid a flash) -->
+  <script>
+    try { if (localStorage.getItem("crt") !== "off") document.documentElement.classList.add("crt"); }
+    catch (e) { document.documentElement.classList.add("crt"); }
+  </script>
 
   <!-- Tab and home-screen icons (sources in assets/*.svg, PNGs rebuilt by make_images.sh) -->
   <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
@@ -49,6 +54,16 @@
       <div id="below"></div>
     </div>
   </main>
+
+  <!-- CRT glass: scanlines, vignette, glare and the rounded screen edge (drawn over everything) -->
+  <div class="crt-glass" aria-hidden="true"></div>
+  <!-- CRT bulge: script.js draws the displacement map that bends the screen -->
+  <svg class="crt-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <filter id="crt-warp" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feImage id="crt-map" result="map" preserveAspectRatio="none"/>
+      <feDisplacementMap id="crt-displace" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
 
   <script src="events.js"></script>
   <script src="content.js"></script>

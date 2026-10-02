@@ -142,6 +142,49 @@ a:focus-visible { outline: 1px solid var(--acc); outline-offset: 1px; }
 }
 @keyframes blink { 50% { background: transparent; color: var(--text); } }
 
+/* ---------- CRT effect (html.crt; turned on and off with /crt) ---------- */
+
+/* Brighter phosphor: the light text colours are lifted a step (dim text stays put, so the
+   hierarchy holds), and every piece of text blooms in its own colour. */
+html.crt {
+  --strong: #FFFFFF;
+  --text: #EAE5EE;
+  --t2: #C6BFCD;
+  --acc: #C9A2E6;
+  --acc-2: #D9C2EC;
+}
+html.crt .screen {
+  text-shadow:
+    0 0 1px color-mix(in srgb, currentColor 70%, transparent),
+    0 0 8px color-mix(in srgb, currentColor 40%, transparent);
+}
+html.crt .qr { text-shadow: none; } /* keep the QR code crisp enough to scan */
+html.crt .cur { box-shadow: 0 0 8px color-mix(in srgb, var(--text) 45%, transparent); }
+html.crt .prompt { box-shadow: 0 -2px 6px -4px var(--rule), 0 2px 6px -4px var(--rule); }
+
+/* Glass over the screen: glare, scanlines, darker edges, rounded corners in a dark frame. */
+.crt-glass { display: none; }
+html.crt .crt-glass {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 28% 12%, rgba(255, 255, 255, 0.035), transparent 45%),
+    repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, 0.16) 2px 3px),
+    radial-gradient(ellipse at center, transparent 72%, rgba(0, 0, 0, 0.1) 100%);
+  box-shadow: 0 0 0 40px #0A080D, inset 0 0 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Bulge (html.crt-warp; desktop Chrome, Edge and Firefox only). The screen becomes a fixed
+   window that scrolls inside itself, so the curve stays put while the text scrolls. */
+.crt-defs { position: absolute; }
+html.crt-warp, html.crt-warp body { height: 100%; overflow: hidden; }
+html.crt-warp { scrollbar-gutter: auto; } /* the screen scrolls now, not the page */
+html.crt-warp .screen { height: 100%; overflow-y: auto; scrollbar-gutter: stable; filter: url(#crt-warp); }
+
 @media (max-width: 600px) {
   :root { --art-size: 12.5px; }
   body { font-size: 12px; }
