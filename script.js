@@ -446,7 +446,9 @@
     const value = input.value;
     const m = value.match(/^\/(\S*)$/);
     const q = m ? m[1].toLowerCase() : "";
-    matches = m ? MENU.filter((c) => [c.name, ...c.aliases].some((n) => n.startsWith(q))) : [];
+    // Match the command name only. Aliases still work when typed in full (byName resolves
+    // them), but listing /luma under "/c" because of its "calendar" alias just looks wrong.
+    matches = m ? MENU.filter((c) => c.name.startsWith(q)) : [];
     sel = Math.min(sel, Math.max(0, matches.length - 1));
 
     let lines;
