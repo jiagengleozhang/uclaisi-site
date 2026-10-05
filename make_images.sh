@@ -17,4 +17,5 @@ qlmanage -t -s 1200 -o "$tmp" "$tmp/og.svg" >/dev/null 2>&1
 sips -c 630 1200 --cropOffset 285 0 "$tmp/og.svg.png" --out og-image.png >/dev/null
 
 rm -rf "$tmp"
-echo "Rebuilt favicon-32.png, apple-touch-icon.png and og-image.png in assets/"
+osascript -l JavaScript ../make_logo_pdf.js "$PWD/uclaisi-logo.pdf" >/dev/null
+echo "Rebuilt favicon-32.png, apple-touch-icon.png, og-image.png and uclaisi-logo.pdf in assets/"
