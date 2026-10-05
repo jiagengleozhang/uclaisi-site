@@ -658,14 +658,49 @@
       if (s.match.test(lower)) return { tool: s.tool, result: s.result, error: s.error, blocks: [{ p: s.text }] };
     }
 
-    // Plain English: the page whose keywords match best wins. Longer phrases count for more.
+    // Plain English: each page scores the keywords the question mentions. Longer phrases count
+    // for more, and near-misses like "hackaton" count a little less. Words from upcoming event
+    // titles count towards /events, and questions about the terminal itself towards /help.
+    const words = lower.match(/[a-z0-9']+/g) || [];
+    const score = (keywords) => keywords.reduce(
+      (n, k) => n + (mentions(lower, k) ? k.length : nearMiss(words, k) ? k.length - 1 : 0), 0);
+    const candidates = [
+      ...PAGES.map((page) => [
+        score(page.id === "events" ? [...page.keywords, ...eventWords()] : page.keywords) + score(page.boost || []),
+        () => pageIntent(page),
+      ]),
+      [score(HELP_KEYWORDS), helpIntent],
+    ];
     let best = null;
     let bestScore = 0;
-    for (const page of PAGES) {
-      const score = page.keywords.filter((k) => mentions(lower, k)).reduce((n, k) => n + k.length, 0);
-      if (score > bestScore) [best, bestScore] = [page, score];
-    }
-    return best ? pageIntent(best) : fallbackIntent();
+    for (const [points, make] of candidates) if (points > bestScore) [best, bestScore] = [make, points];
+    return best ? best() : fallbackIntent();
+  }
+
+  // A typo of a longer keyword: one letter added, missing, changed, or two swapped.
+  function nearMiss(words, keyword) {
+    if (keyword.length < 6 || /[^a-z]/.test(keyword)) return false;
+    return words.some((w) => w.length >= 5 && (oneEditApart(w, keyword) || oneEditApart(w, `${keyword}s`)));
+  }
+
+  function oneEditApart(a, b) {
+    if (a === b || Math.abs(a.length - b.length) > 1) return false;
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    const restA = a.slice(i);
+    const restB = b.slice(i);
+    return restA.slice(1) === restB.slice(1)
+      || restA.slice(1) === restB
+      || restA === restB.slice(1)
+      || (restA[0] === restB[1] && restA[1] === restB[0] && restA.slice(2) === restB.slice(2));
+  }
+
+  // Distinctive words from upcoming event titles ("deepmind", "reuters"), so asking about an
+  // event by name finds /events. Words some page already uses as a keyword are left out.
+  function eventWords() {
+    const used = new Set(PAGES.flatMap((p) => p.keywords.flatMap((k) => k.split(" "))));
+    const titles = upcomingEvents().map((ev) => ev.title.toLowerCase()).join(" ");
+    return [...new Set(titles.match(/[a-z0-9]{5,}/g) || [])].filter((w) => !used.has(w) && !used.has(w.replace(/s$/, "")));
   }
 
   // ---------- Running a turn ----------
