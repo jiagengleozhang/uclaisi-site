@@ -137,7 +137,9 @@ const TRACKS = {
 };
 
 // Each page is a command (/id) and a URL (#/id).
-// `keywords` let plain-English questions ("how do I join?") find the right page.
+// `keywords` let plain-English questions ("how do I join?") find the right page: the page whose
+// keywords the question mentions most wins, and longer phrases count for more. Words in `boost`
+// count double, for words that say what kind of question it is ("when", "where", "join").
 const PAGES = [
   {
     id: "start",
@@ -145,7 +147,12 @@ const PAGES = [
     title: "Start here",
     file: "start.md",
     desc: "new to AI safety? pick where to begin",
-    keywords: ["start", "new to", "new to ai safety", "into ai safety", "where do i start", "getting started", "beginner", "intro", "introduction", "learn"],
+    keywords: [
+      "start", "start here", "new to", "new to ai safety", "into ai safety", "get into", "where do i start",
+      "where to start", "how do i start", "where do i begin", "getting started", "get started", "beginner",
+      "basics", "intro", "introduction", "learn", "learn more", "learn about", "what should i read",
+      "reading list", "recommend", "recommendation", "book", "resource", "course", "crash course",
+    ],
     next: ["faq", "events"],
     blocks: [
       { h: "New to AI safety? Pick where you want to start:" },
@@ -157,7 +164,11 @@ const PAGES = [
     title: "About",
     file: "README.md",
     desc: "what UCLAISI is and why it exists",
-    keywords: ["about", "who", "what is", "what are", "mission", "why", "society", "ai safety", "risk", "philosophy"],
+    keywords: [
+      "about", "who", "who are you", "what is", "what are", "what is this", "what's this", "mission", "why",
+      "goal", "aim", "purpose", "values", "stand for", "society", "club", "uclaisi", "aisi", "initiative",
+      "risk", "x-risk", "existential", "dangerous", "matter", "philosophy",
+    ],
     next: ["programme", "join"],
     blocks: [
       { h: "AI safety at UCL" },
@@ -174,7 +185,13 @@ const PAGES = [
     title: "Programme",
     file: "programme.md",
     desc: "reading groups, seminars, hackathons and more",
-    keywords: ["programme", "program", "do you do", "activities", "reading", "paper", "seminar", "talk", "speaker", "hackathon", "sprint", "policy", "governance", "career", "fellowship", "internship", "social", "dinner"],
+    keywords: [
+      "programme", "program", "do you do", "what happens", "activities", "session", "workshop",
+      "reading", "reading group", "paper", "discussion", "seminar", "talk", "speaker", "guest speaker",
+      "hackathon", "sprint", "project", "research", "build", "eval", "interpretability", "oversight",
+      "policy", "governance", "career", "job", "fellowship", "internship", "mentor",
+      "social", "dinner", "food", "pizza", "drinks", "pub", "meet people", "make friends", "networking",
+    ],
     next: ["events", "join"],
     blocks: [
       { h: "Programme" },
@@ -195,7 +212,19 @@ const PAGES = [
     title: "Events",
     file: "events.md",
     desc: "what's on this term",
-    keywords: ["event", "when", "schedule", "what's on", "whats on", "this term", "next", "upcoming", "date", "where", "room"],
+    keywords: [
+      "event", "when", "when is", "when is the", "when's", "what time", "time", "schedule", "timetable",
+      "what's on", "whats on", "on tonight", "what's happening", "whats happening", "happening",
+      "this week", "next week", "this term", "tonight", "today", "tomorrow", "next", "upcoming",
+      "coming up", "date", "where", "where do you meet", "location", "venue", "room", "building",
+      "freshers", "first session", "start of term", "what day", "what day is", "how often", "meet",
+      "held", "where are", "this month", "next month", "planned", "plan", "meeting", "meetup",
+      "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "weekend",
+    ],
+    boost: [
+      "when", "when is", "when's", "what time", "what day", "what day is", "how often", "where",
+      "where are", "held", "today", "tonight", "tomorrow", "this week", "next week",
+    ],
     next: ["join", "programme"],
     blocks: [
       { h: SITE.term },
@@ -213,7 +242,13 @@ const PAGES = [
     tool: "Fetch(uclaisi.org/join)",
     result: "302 → chat.whatsapp.com",
     desc: "WhatsApp group and Luma calendar",
-    keywords: ["join", "whatsapp", "sign up", "signup", "member", "get involved", "involved", "group chat", "qr"],
+    keywords: [
+      "join", "how do i join", "sign up", "signup", "register", "member", "membership", "become a member",
+      "apply", "get involved", "involved", "whatsapp", "group chat", "chat", "discord", "slack",
+      "telegram", "mailing list", "newsletter", "subscribe", "invite", "invite link", "qr",
+      "want to join", "become part of", "be part of", "add me", "add me to", "the group",
+    ],
+    boost: ["join", "sign up", "become a member"],
     next: ["events", "programme"],
     blocks: [
       { h: "Join our group on WhatsApp" },
@@ -229,7 +264,11 @@ const PAGES = [
     tool: "Open(lu.ma/UCLAISI)",
     opens: SITE.luma, // opened in a new tab when someone runs the command
     desc: "open the Luma calendar",
-    keywords: ["luma", "calendar", "ticket", "rsvp"],
+    keywords: [
+      "luma", "calendar", "add to calendar", "my calendar", "google calendar", "ical", "ticket", "rsvp",
+      "booking", "book a place", "reserve", "sign up for", "register for", "rsvp for", "get a ticket",
+    ],
+    boost: ["rsvp", "rsvp for", "ticket"],
     next: ["events", "join"],
     blocks: [
       { h: "Follow us on Luma" },
@@ -244,7 +283,17 @@ const PAGES = [
     file: "faq.md",
     tool: "Bash(man uclaisi)",
     desc: "common questions, as a man page",
-    keywords: ["faq", "question", "free", "cost", "fee", "price", "pay", "background", "experience", "not at ucl", "non-ucl", "other universities", "can i", "do i need", "do i have to"],
+    keywords: [
+      "faq", "question", "is it free", "free to join", "free", "cost", "how much", "fee", "membership fee",
+      "price", "pay", "money", "background", "technical background", "experience", "need experience",
+      "not at ucl", "non-ucl", "non ucl", "other universities", "other uni", "outside ucl", "kcl", "king's",
+      "imperial", "lse", "postgrad", "phd", "masters", "undergrad", "can i", "can i come", "can anyone",
+      "open to", "do i need", "do i have to", "read the paper", "prepare", "do i need to sign up",
+      "sceptical", "skeptical", "not sure", "disagree", "application help", "still come", "can i still",
+      "don't know", "dont know", "no experience", "know how to code", "code", "is this for me",
+      "for me", "only for", "i study", "degree", "subject", "course mate", "computer science", "cs",
+      "law", "history", "economics", "medicine", "humanities", "arts",
+    ],
     next: ["start", "join"],
     blocks: [{ faq: FAQ }],
   },
@@ -254,7 +303,10 @@ const PAGES = [
     title: "Team",
     file: "team.md",
     desc: "the committee, and who to ask about what",
-    keywords: ["team", "committee", "who runs", "run by", "organiser", "organizer", "president", "exec"],
+    keywords: [
+      "team", "committee", "who runs", "run by", "who's in charge", "in charge", "organiser", "organizer",
+      "president", "exec", "officer", "leader", "lead", "who leads", "founder", "board", "people behind",
+    ],
     next: ["contact", "join"],
     blocks: [
       { h: "Committee" },
@@ -268,7 +320,12 @@ const PAGES = [
     title: "Contact",
     file: "contact.md",
     desc: "email and where to find us",
-    keywords: ["contact", "email", "e-mail", "reach", "get in touch", "instagram", "linkedin", "social media", "message"],
+    keywords: [
+      "contact", "email", "e-mail", "mail", "reach", "reach out", "get in touch", "message", "dm",
+      "instagram", "insta", "linkedin", "twitter", "social media", "sponsor", "sponsorship", "partner",
+      "partnership", "collaborate", "collaboration", "give a talk", "speak at", "press", "journalist",
+      "present", "present my", "share my research",
+    ],
     next: ["team", "join"],
     blocks: [
       { h: "Contact" },
@@ -286,11 +343,23 @@ const PAGES = [
   },
 ];
 
+// Questions about the terminal itself ("what can you do?") are answered with /help.
+const HELP_KEYWORDS = [
+  "help", "commands", "command", "what can you do", "what can i ask", "what can i type", "what do i type",
+  "how does this work", "how do i use", "how to use", "options", "menu",
+];
+
 // Replies for things that aren't questions about the society. First match wins.
 const SMALLTALK = [
   { match: /rm\s+-rf/, tool: "Bash(rm -rf /)", result: "Blocked by policy", error: true, text: "Nice try. Oversight works." },
   { match: /^sudo\b/, tool: "Bash(sudo)", result: "Permission denied", error: true, text: "This agent runs sandboxed. As it should." },
-  { match: /^(hi|hey|hello|hiya|yo)\b/, text: "Hi! Ask me what we do, what's on, or how to join." },
+  { match: /\b(are you|is this)( an?| a real| actually)? (ai|bot|robot|chatbot|human|real|chatgpt|gpt|claude|llm)\b/,
+    text: "No model here: I match what you type to the right page. `/help` lists everything I know." },
+  { match: /^(hi|hey|hello|hiya|yo|good (morning|afternoon|evening))\b/, text: "Hi! Ask me what we do, what's on, or how to join." },
+  { match: /^(thanks|thank you|thx|ty|cheers)\b/, text: "Anytime. `/join` if you'd like to come along." },
+  { match: /^(bye|goodbye|see you|see ya|cya)\b/, text: "See you at the next session. `/events` has what's on." },
+  { match: /^pwd$/, text: "~/ucl/ai-safety" },
+  { match: /^ping$/, text: "pong" },
   { match: /^whoami\b/, text: "guest, for now. `/join` to change that." },
   { match: /^(exit|quit|:q|logout)\b/, text: "There's no leaving. There is `/join`, though." },
 ];
