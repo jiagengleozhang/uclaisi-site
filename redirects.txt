@@ -1,0 +1,12 @@
+# Short links on uclaisi.org. One per line: path, then the full URL it goes to.
+# Pushing a change here updates the live site within about 5 minutes.
+# Lines starting with # are ignored. Paths must start with /, targets with http.
+
+# The WhatsApp invite. The site, printed material and old links all use /join.
+/join   https://chat.whatsapp.com/HOODXpJ6UlnD2a5NpYgBqK
+
+# Audience questions at events. Point this at the current Slido event before each one.
+/ask    https://www.slido.com
+
+# The old site's events URL; the new site routes by hash.
+/events https://uclaisi.org/#/events
