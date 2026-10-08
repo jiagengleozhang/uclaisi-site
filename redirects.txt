@@ -6,7 +6,7 @@
 /join   https://chat.whatsapp.com/HOODXpJ6UlnD2a5NpYgBqK
 
 # Audience questions at events. Point this at the current Slido event before each one.
-/ask    https://www.slido.com
+/ask    https://app.sli.do/event/pA4cjPeoPwMFgwj8nH9kmm
 
 # The old site's events URL; the new site routes by hash.
 /events https://uclaisi.org/#/events
